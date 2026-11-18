@@ -17,7 +17,9 @@ jobs:
 
   ios:
     needs: engine-tests
-    runs-on: macos-latest
+    # Apple-silicon macOS runners (macos-15 / macos-latest) are capacity-constrained and the
+    # first run was never picked up; the Intel image builds iOS apps the same way.
+    runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
