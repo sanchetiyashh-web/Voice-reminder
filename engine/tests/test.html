@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine Tests</title>
+<style>
+  :root { --bg: #fff; --fg: #111; --pass: #0a7a2f; --fail: #b00020; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111; --fg: #eee; --pass: #4caf50; --fail: #ff6b6b; } }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; margin: 16px; }
+  pre { white-space: pre-wrap; word-break: break-word; }
+  textarea { width: 100%; height: 60px; font: inherit; }
+</style>
+</head>
+<body>
+<h3>Voice Planner — understanding engine</h3>
+<p>Try a sentence (now = Wed 18 Nov 2026, 5:30 PM):</p>
+<textarea id="try">Remind me to call the supplier tomorrow at 11 AM</textarea>
+<pre id="tryOut"></pre>
+<pre id="out">running…</pre>
+<script src="../understanding.js"></script>
+<script src="cases.js"></script>
+<script src="heldout.js"></script>
+<script src="runner.js"></script>
+<script>
+  var rep = VP_RUNNER.runAll(VP, VP_TESTS);
+  var held = VP_RUNNER.runAll(VP, { NOW: VP_TESTS.NOW, ITEMS: VP_TESTS.ITEMS, CASES: VP_HELDOUT, FLOWS: [] });
+  window.__report = rep; window.__held = held;
+  document.getElementById('out').textContent = '=== MAIN CORPUS ===\n' + VP_RUNNER.format(rep) + '\n\n=== HELD-OUT SET ===\n' + VP_RUNNER.format(held);
+  function tryIt() {
+    var r = VP.parse({ text: document.getElementById('try').value, now: VP_TESTS.NOW, settings: { defaultDurationMin: 60 }, context: { items: VP_TESTS.ITEMS } });
+    document.getElementById('tryOut').textContent = JSON.stringify(r, null, 2);
+  }
+  document.getElementById('try').addEventListener('input', tryIt); tryIt();
+</script>
+</body>
+</html>
