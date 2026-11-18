@@ -21,12 +21,14 @@
 <script src="../understanding.js"></script>
 <script src="cases.js"></script>
 <script src="heldout.js"></script>
+<script src="marathi.js"></script>
 <script src="runner.js"></script>
 <script>
   var rep = VP_RUNNER.runAll(VP, VP_TESTS);
   var held = VP_RUNNER.runAll(VP, { NOW: VP_TESTS.NOW, ITEMS: VP_TESTS.ITEMS, CASES: VP_HELDOUT, FLOWS: [] });
-  window.__report = rep; window.__held = held;
-  document.getElementById('out').textContent = '=== MAIN CORPUS ===\n' + VP_RUNNER.format(rep) + '\n\n=== HELD-OUT SET ===\n' + VP_RUNNER.format(held);
+  var mr = VP_RUNNER.runAll(VP, { NOW: VP_TESTS.NOW, ITEMS: VP_TESTS.ITEMS, CASES: VP_MARATHI, FLOWS: [] });
+  window.__report = rep; window.__held = held; window.__mr = mr;
+  document.getElementById('out').textContent = '=== MAIN CORPUS ===\n' + VP_RUNNER.format(rep) + '\n\n=== HELD-OUT SET ===\n' + VP_RUNNER.format(held) + '\n\n=== MARATHI / MIXED ===\n' + VP_RUNNER.format(mr);
   function tryIt() {
     var r = VP.parse({ text: document.getElementById('try').value, now: VP_TESTS.NOW, settings: { defaultDurationMin: 60 }, context: { items: VP_TESTS.ITEMS } });
     document.getElementById('tryOut').textContent = JSON.stringify(r, null, 2);

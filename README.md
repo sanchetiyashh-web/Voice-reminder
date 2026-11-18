@@ -13,7 +13,8 @@ Everything runs on the iPhone: Apple's on-device speech recognition, a bundled u
 
 | Part | Status |
 |---|---|
-| Understanding engine (`engine/understanding.js`) | **Tested**: 53/53 corpus cases, 6/6 follow-up flows; held-out set **16/20 on first run** (fixed afterwards) |
+| Understanding engine (`engine/understanding.js`) | **Tested**: 53/53 corpus cases, 6/6 follow-up flows; held-out set **16/20 on first run**; Marathi/mixed **17/19 on first run** (all fixed afterwards) |
+| Languages | Understands English, Hindi, Marathi (Roman or Devanagari, mixed). Speech via Apple: English (India), Hindi. **Apple has no Marathi speech recognition.** |
 | iOS app (`VoicePlanner/`, SwiftUI) | **Implemented, not yet compiled** (no Mac here). First compile happens in GitHub Actions. |
 | Speech accuracy on your voice | **Not tested**; use the in-app Speech test |
 | Calendar, notifications, Siri, Undo, export | Implemented, unverified on a device |

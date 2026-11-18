@@ -216,6 +216,7 @@ struct CaptureView: View {
             .navigationTitle("Capture")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) { LanguageMenu(disabled: m.phase == .listening) }
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { m.close(); dismiss() } }
             }
             .task {
@@ -224,6 +225,29 @@ struct CaptureView: View {
             }
         }
         .interactiveDismissDisabled(m.phase == .listening || m.phase == .processing)
+    }
+}
+
+/// Quick switch of the speech-recognition language. The understanding engine reads
+/// English, Hindi and Marathi (Roman or Devanagari, mixed) whichever is chosen.
+private struct LanguageMenu: View {
+    let disabled: Bool
+    @EnvironmentObject private var settings: AppSettings
+    private let short = ["en-IN": "EN", "hi-IN": "हिं", "mr-IN": "मरा", "en-US": "US", "en-GB": "UK"]
+
+    var body: some View {
+        Menu {
+            Picker("Speech language", selection: $settings.localeId) {
+                ForEach(AppSettings.languages, id: \.id) { l in
+                    Text(l.name + (SpeechRecorder.recognizerExists(l.id) ? "" : " (Apple: not supported)")).tag(l.id)
+                }
+            }
+        } label: {
+            Label(short[settings.localeId] ?? settings.localeId, systemImage: "globe")
+                .labelStyle(.titleAndIcon)
+        }
+        .disabled(disabled)
+        .accessibilityLabel("Speech language")
     }
 }
 

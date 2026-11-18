@@ -34,6 +34,16 @@ Errors seen on the first held-out run:
 
 **Expect roughly 1 in 5 new phrasings to need a correction or an extra question at first.** The design favours asking over guessing, and every save shows the resolved date and time with Undo.
 
+### Marathi and mixed Marathi/Hindi/English (`engine/tests/marathi.js`, 19 utterances)
+Roman-script Marathi ("Udya sakali 10 vajta … aathvan karun de", "15 divsanni …", "Pudhchya somvari dupari 3 vajta …"), Devanagari Marathi ("उद्या दुपारी 3 वाजता डॉक्टरांची भेट आहे", "परवा सकाळी नऊ वाजता … आठवण करून दे"), and mixes ("Tomorrow sakali 9 vajta Rahul la call karna hai", "I have a dentist appointment parva at 3 PM", an English sentence followed by a Hindi one).
+
+| Run | Result |
+|---|---|
+| **First run** | **17/19**. One wrong merge: a second Hindi sentence was glued onto the first task, so the task asked for a date and time it already had. One past-tense sentence ("Kaal doctor kade gelo hoto") asked for a time instead of first saying the date has passed. |
+| After fixes | 19/19. I changed the expectation for the past-tense case after the first run, from "no question" to "asks that the date is past". |
+
+Ambiguities it handles by asking or by noting: Marathi **"kaal"/काल = yesterday** (asks), Hindi **"kal" = tomorrow** in planning context (noted on save), **"parva"** = day after tomorrow (noted). Edits ("move…", "cancel…") are still recognised in **English only**.
+
 ### Response time (understanding only)
 1,460 parses: **0.14 ms average**, max 10 ms, in desktop V8. Not measured in iPhone JavaScriptCore. It should be in the low milliseconds; the in-app Speech test screen shows it per run.
 
@@ -53,6 +63,7 @@ What to expect, from Apple's docs and general knowledge, unverified for your voi
 - `en-IN` on-device is the best choice for Indian-accented English and light Hinglish. Hindi words may come back in Latin script or be mis-heard.
 - `hi-IN` returns Devanagari; English words may be transliterated. The engine maps common Devanagari date/time words, but **mixed-language accuracy is the weakest area**.
 - Whether on-device `hi-IN` is available depends on your iPhone and iOS version; the app shows this in Settings and never silently falls back to Apple's servers.
+- **Marathi (`mr-IN`) is not offered by Apple's speech recognition** (checked against Apple's iOS 27 feature-availability page, Dictation section, Nov 2026). The app says so if you pick it, and offers English (India) or typing instead.
 
 ## 3. App (Swift): **implemented, unverified**
 Not compiled yet: no macOS here. The first compile happens in the GitHub Actions workflow. I reviewed the code and fixed one definite compile error, but expect a few compile errors on the first run; send me the build log.

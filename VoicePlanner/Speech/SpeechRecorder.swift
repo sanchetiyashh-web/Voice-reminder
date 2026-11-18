@@ -78,6 +78,10 @@ final class SpeechRecorder: ObservableObject {
         return (mic, speech)
     }
 
+    static func recognizerExists(_ localeId: String) -> Bool {
+        SFSpeechRecognizer(locale: Locale(identifier: localeId)) != nil
+    }
+
     static func onDeviceSupported(_ localeId: String) -> Bool {
         SFSpeechRecognizer(locale: Locale(identifier: localeId))?.supportsOnDeviceRecognition ?? false
     }
@@ -93,7 +97,10 @@ final class SpeechRecorder: ObservableObject {
         guard perms.mic else { return fail("Microphone access is off. Turn it on in Settings › Voice Planner, or type instead.") }
         guard perms.speech else { return fail("Speech Recognition access is off. Turn it on in Settings › Voice Planner, or type instead.") }
         guard let rec = SFSpeechRecognizer(locale: Locale(identifier: localeId)) else {
-            return fail("Speech recognition doesn't support \(localeId) on this iPhone. Choose another language in Settings, or type.")
+            if localeId.hasPrefix("mr") {
+                return fail("Apple's speech recognition doesn't support Marathi yet. Switch to English (India) with the globe button and speak — Marathi date/time words like udya, parva, vajta are understood — or tap Type and write in Marathi (Devanagari or Roman), which is fully understood.")
+            }
+            return fail("Speech recognition doesn't support \(localeId) on this iPhone. Choose another language, or type.")
         }
         guard rec.isAvailable else { return fail("Speech recognition is unavailable right now. Type instead, or try again.") }
         if !rec.supportsOnDeviceRecognition && !allowServer {

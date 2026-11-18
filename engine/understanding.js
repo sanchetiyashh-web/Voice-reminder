@@ -49,12 +49,13 @@
 
   // ---------------------------------------------------------------- vocab
   var NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
-  var HNUMW = { ek: 1, 'do': 2, teen: 3, tin: 3, chaar: 4, char: 4, paanch: 5, panch: 5, chhe: 6, chhah: 6, che: 6, saat: 7, aath: 8, nau: 9, das: 10, gyaarah: 11, gyarah: 11, baarah: 12, barah: 12 };
+  var HNUMW = { don: 2, pach: 5, saha: 6, daha: 10, akra: 11, bara: 12, ek: 1, 'do': 2, teen: 3, tin: 3, chaar: 4, char: 4, paanch: 5, panch: 5, chhe: 6, chhah: 6, che: 6, saat: 7, aath: 8, nau: 9, das: 10, gyaarah: 11, gyarah: 11, baarah: 12, barah: 12 };
   var CNTW = {
     'a couple of': 2, 'couple of': 2, a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
     eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
     'twenty five': 25, thirty: 30, 'forty five': 45, forty: 40, fifty: 50, sixty: 60, ninety: 90,
-    ek: 1, 'do': 2, teen: 3, chaar: 4, char: 4, paanch: 5, panch: 5, saat: 7, das: 10, pandrah: 15, bees: 20, tees: 30
+    ek: 1, 'do': 2, teen: 3, chaar: 4, char: 4, paanch: 5, panch: 5, saat: 7, das: 10, pandrah: 15, bees: 20, tees: 30,
+    don: 2, pach: 5, saha: 6, daha: 10, pandhra: 15, vees: 20
   };
   function alt(obj) { return Object.keys(obj).sort(function (a, b) { return b.length - a.length; }).join('|'); }
   var NUM = '(\\d{1,2}|' + alt(NUMW) + ')';
@@ -77,12 +78,18 @@
   var WEEKDAYS = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, ravivar: 0, raviwar: 0, itvaar: 0, itwar: 0, somvar: 1, somwar: 1, mangalvar: 2, mangalwar: 2, budhvar: 3, budhwar: 3, guruvar: 4, guruwar: 4, shukravar: 5, shukrawar: 5, shanivar: 6, shaniwar: 6 };
   var WD = '(' + alt(WEEKDAYS) + ')';
 
-  var AM_CTX = /\b(morning|subah|subha|savere|sawere)\b/i;
-  var PM_CTX = /\b(afternoon|evening|tonight|night|shaam|sham|raat|dopahar|dupahar)\b/i;
-  var CTX_WORDS = '(?:in the morning|in the afternoon|in the evening|at night|this morning|this afternoon|this evening|morning|afternoon|evening|night|subah|subha|savere|shaam|sham|raat|dopahar|dupahar)(?:\\s+(?:ko|me|mein))?';
+  var AM_CTX = /\b(morning|subah|subha|savere|sawere|sakali|sakaali)\b/i;
+  var PM_CTX = /\b(afternoon|evening|tonight|night|shaam|sham|raat|dopahar|dupahar|sandhyakali|sandhyakaali|sandhyakal|ratri|dupari|dupaari)\b/i;
+  var CTX_WORDS = '(?:in the morning|in the afternoon|in the evening|at night|this morning|this afternoon|this evening|morning|afternoon|evening|night|subah|subha|savere|shaam|sham|raat|dopahar|dupahar|sakali|sakaali|sandhyakali|sandhyakaali|ratri|dupari|dupaari)(?:\\s+(?:ko|me|mein))?';
 
   // ---------------------------------------------------------------- Devanagari → roman for date/time/trigger words
   var DEVA = [
+    ['सोमवारी', 'somvari'], ['मंगळवारी', 'mangalvari'], ['मंगलवारी', 'mangalvari'], ['बुधवारी', 'budhvari'], ['गुरुवारी', 'guruvari'], ['शुक्रवारी', 'shukravari'], ['शनिवारी', 'shanivari'], ['रविवारी', 'ravivari'], ['मंगळवार', 'mangalvar'],
+    ['उद्या', 'udya'], ['परवा', 'parva'], ['काल', 'kaal'], ['वाजता', 'vajta'], ['वाजले', 'vajta'], ['सकाळी', 'sakali'], ['संध्याकाळी', 'sandhyakali'], ['रात्री', 'ratri'], ['दुपारी', 'dupari'],
+    ['सव्वा', 'sava'], ['पावणे', 'paune'], ['दीड', 'dedh'], ['अडीच', 'dhai'], ['दिवसांनी', 'divsanni'], ['आठवड्यांनी', 'aathvadyanni'], ['महिन्यांनी', 'mahinyanni'],
+    ['आठवण करून देणे', 'aathvan karun de'], ['आठवण करून द्या', 'aathvan karun de'], ['आठवण करून दे', 'aathvan karun de'], ['मला', 'mala'], ['पुढच्या', 'pudhchya'], ['पुढील', 'pudhil'],
+    ['आठवड्यात', 'aathvadyat'], ['माझी कल्पना', 'majhi kalpana'], ['कल्पना', 'kalpana'],
+    ['दोन', 'don'], ['पाच', 'pach'], ['सहा', 'saha'], ['नऊ', 'nau'], ['दहा', 'daha'], ['अकरा', 'akra'], ['बारा', 'bara'],
     ['परसों', 'parson'], ['परसो', 'parson'], ['आज', 'aaj'], ['कल', 'kal'], ['बजे', 'baje'], ['सुबह', 'subah'], ['शाम', 'shaam'],
     ['रात', 'raat'], ['दोपहर', 'dopahar'], ['साढ़े', 'sade'], ['साढे', 'sade'], ['सवा', 'sava'], ['पौने', 'paune'], ['डेढ़', 'dedh'], ['डेढ', 'dedh'], ['ढाई', 'dhai'],
     ['सोमवार', 'somvar'], ['मंगलवार', 'mangalvar'], ['बुधवार', 'budhvar'], ['गुरुवार', 'guruvar'], ['बृहस्पतिवार', 'guruvar'], ['शुक्रवार', 'shukravar'], ['शनिवार', 'shanivar'], ['रविवार', 'ravivar'],
@@ -90,14 +97,14 @@
     ['याद दिलाना', 'yaad dilana'], ['याद दिला देना', 'yaad dilana'], ['याद दिलाओ', 'yaad dilana'], ['याद दिला', 'yaad dilana'], ['मुझे', 'mujhe'],
     ['एक', 'ek'], ['दो', 'do'], ['तीन', 'teen'], ['चार', 'char'], ['पांच', 'paanch'], ['पाँच', 'paanch'], ['छह', 'chhe'], ['छः', 'chhe'], ['सात', 'saat'], ['आठ', 'aath'], ['नौ', 'nau'], ['दस', 'das'], ['ग्यारह', 'gyarah'], ['बारह', 'barah']
   ];
-  var DEVA_NUMS = ['एक', 'दो', 'तीन', 'चार', 'पांच', 'पाँच', 'छह', 'छः', 'सात', 'आठ', 'नौ', 'दस', 'ग्यारह', 'बारह'];
+  var DEVA_NUMS = ['दोन', 'पाच', 'सहा', 'नऊ', 'दहा', 'अकरा', 'बारा', 'एक', 'दो', 'तीन', 'चार', 'पांच', 'पाँच', 'छह', 'छः', 'सात', 'आठ', 'नौ', 'दस', 'ग्यारह', 'बारह'];
   function mapDevanagari(s) {
     s = s.replace(/[०-९]/g, function (c) { return String(c.charCodeAt(0) - 0x0966); });
     for (var i = 0; i < DEVA.length; i++) {
       var dv = DEVA[i][0];
       if (DEVA_NUMS.indexOf(dv) >= 0) {
         // number words only when they are part of a time / count expression
-        s = s.replace(R('(?<![\\u0900-\\u097F])' + dv + '(?=\\s*(?:बजे|baje|दिन|din|हफ्ते|hafte|मिनट|minute|घंटे|ghante))', 'g'), DEVA[i][1]);
+        s = s.replace(R('(?<![\\u0900-\\u097F])' + dv + '(?=\\s*(?:बजे|baje|वाजता|vajta|दिन|din|दिवसांनी|divsanni|हफ्ते|hafte|मिनट|minute|घंटे|ghante))', 'g'), DEVA[i][1]);
       } else {
         s = s.replace(R('(?<![\\u0900-\\u097F])' + dv + '(?![\\u0900-\\u097F])', 'g'), DEVA[i][1]);
       }
@@ -107,7 +114,7 @@
 
   // ---------------------------------------------------------------- fillers
   var NOISE_RE = /(^|[\s,.;])(?:u+m+|u+h+m*|e+r+m*|a+h+|h+m+|m{2,})(?=[\s,.;!?]|$),?/gi;
-  var DISCOURSE_RE = /(^|[\s,])(?:you know|basically|actually|i mean|okay so|ok so|so yeah|matlab|accha|acha|achha|haan)(?=[\s,.;!?]|$),?/gi;
+  var DISCOURSE_RE = /(^|[\s,])(?:you know|basically|actually|i mean|okay so|ok so|so yeah|matlab|accha|acha|achha|haan|mhanje)(?=[\s,.;!?]|$),?/gi;
   function removeNoise(s) { return s.replace(NOISE_RE, '$1'); }
   function removeDiscourse(s) {
     s = s.replace(DISCOURSE_RE, '$1');
@@ -149,14 +156,14 @@
 
   var PATTERNS = [
     // ---------- dates
-    { cat: 'date', re: R('\\b(?:on\\s+|by\\s+|for\\s+)?(?:the\\s+)?day after tomorrow\\b|\\b(?:parson|parso|parsoon|parsun|parsõ)\\b'), fn: function (m, now) { return D(addDays(today(now), 2)); } },
-    { cat: 'date', re: R('\\b(?:by\\s+|for\\s+)?(?:tomorrow|tomorow|tommorow|tmrw|kal)\\b'), fn: function (m, now) {
+    { cat: 'date', re: R('\\b(?:on\\s+|by\\s+|for\\s+)?(?:the\\s+)?day after tomorrow\\b|\\b(?:parson|parso|parsoon|parsun|parsõ|parva|paravaa|parwa)\\b'), fn: function (m, now) { var o = D(addDays(today(now), 2)); if (/parv|parw/i.test(m[0])) o.note = '“parva” read as day after tomorrow'; return o; } },
+    { cat: 'date', re: R('\\b(?:by\\s+|for\\s+)?(?:tomorrow|tomorow|tommorow|tmrw|kal|udya|udyaa|udhya|udyala)\\b'), fn: function (m, now) {
         var o = D(addDays(today(now), 1)); if (/kal/i.test(m[0])) o.note = '“kal” read as tomorrow'; return o; } },
     { cat: 'date', re: R('\\b(?:by\\s+|for\\s+)?(?:today|aaj|tonight)\\b'), fn: function (m, now) { return D(today(now)); } },
-    { cat: 'date', re: R('\\byesterday\\b'), fn: function (m, now) { return D(addDays(today(now), -1)); } },
-    { cat: 'date', re: R('\\b(?:(?:on|by|for)\\s+)?(?:(this coming|next|this|coming|upcoming|agle|agla|is)\\s+)?(?:(next|this) week\\s+)?' + WD + '(?:\\s+(next week|this week|agle hafte))?\\b'),
+    { cat: 'date', re: R('\\b(?:yesterday|kaal)\\b'), fn: function (m, now) { return D(addDays(today(now), -1)); } },
+    { cat: 'date', re: R('\\b(?:(?:on|by|for)\\s+)?(?:(this coming|next|this|coming|upcoming|agle|agla|is|pudhchya|pudhcha|pudhil|ya)\\s+)?(?:(next|this) week\\s+)?' + WD + 'i?(?:\\s+(next week|this week|agle hafte))?\\b'),
       fn: function (m, now, st) {
-        var mod = (m[1] || '').toLowerCase(), wk = (m[2] || m[4] || '').toLowerCase(), wd = WEEKDAYS[m[3].toLowerCase()];
+        var mod = (m[1] || '').toLowerCase().replace(/^(pudhchya|pudhcha|pudhil)$/, 'coming').replace(/^ya$/, 'this'), wk = (m[2] || m[4] || '').toLowerCase(), wd = WEEKDAYS[m[3].toLowerCase()];
         if (/next|agle/.test(wk)) return D(weekdayNextWeek(now, wd));
         if (wk === 'this week' || mod === 'this' || mod === 'is') return D(nextWeekday(now, wd, 'this'));
         if (mod === 'next') {
@@ -180,6 +187,14 @@
         if (/^year/.test(u)) return D(addMonths(t, 12 * n));
         return null;
       } },
+    { cat: 'date', re: R('\\b' + CNT + '\\s+(divsanni|divasanni|divsani|divasani|aathvadyanni|aathvadyani|athvadyanni|mahinyanni|mahinyani)\\b'),
+      fn: function (m, now) {
+        var n = num(m[1]), u = m[2].toLowerCase(); if (isNaN(n) || n !== Math.floor(n)) return null;
+        var t = today(now);
+        if (/^div/.test(u)) return D(addDays(t, n));
+        if (/thv/.test(u)) return D(addDays(t, 7 * n));
+        return D(addMonths(t, n));
+      } },
     { cat: 'time', pri: 1, re: R('\\b(?:in|after)\\s+' + CNT + '\\s+(hours?|hrs?|minutes?|mins?|ghante|ghanta)\\b|\\b' + CNT + '\\s+(hours?|minutes?|mins?|ghante|ghanta|minute)\\s+(?:baad|bad|later|from now)\\b'),
       fn: function (m, now) {
         var n = num(m[1] || m[3]), u = (m[2] || m[4]).toLowerCase();
@@ -202,7 +217,7 @@
       } },
     { cat: 'date', re: R('\\b(?:(?:on|by|this|over the|on the)\\s+)?weekend\\b'),
       fn: function (m, now) { var d = nextWeekday(now, 6, 'this'); return D(d, { note: '“weekend” read as Saturday ' + fmtDate(d, now) }); } },
-    { cat: 'date', re: R('\\b(?:next|agle|agla)\\s+(week|hafte|month|mahine)\\b|\\blater this week\\b|\\bsometime\\b'),
+    { cat: 'date', re: R('\\b(?:pudhchya|pudhil)\\s+(?:aathvadyat|aathavdyat|athvadyat|aathvada|mahinyat)\\b|\\b(?:next|agle|agla)\\s+(week|hafte|month|mahine)\\b|\\blater this week\\b|\\bsometime\\b'),
       fn: function (m) { return { vague: m[0] }; } },
 
     // ---------- times
@@ -238,15 +253,15 @@
     { cat: 'time', re: R('\\b' + PREP + NUM + "\\s*o'?\\s?clock\\b"), fn: function (m) { var h = num(m[1]); return isNaN(h) || h > 12 ? null : T(h, 0, null); } },
     { cat: 'time', re: R('\\b' + NUM + '(?:[:.](\\d{2}))?\\s+in the\\s+(morning|afternoon|evening|night)\\b'),
       fn: function (m) { var h = num(m[1]); if (isNaN(h) || h > 12) return null; return T(h, +(m[2] || 0), /morning/i.test(m[3]) ? 'am' : 'pm'); } },
-    { cat: 'time', re: R('\\b' + PREP + '(sade|saade|sadhe|savaa|sava|sawa|paune|pone)\\s+' + HNUM + '\\s*(?:baje|bje)?\\b'),
+    { cat: 'time', re: R('\\b' + PREP + '(sade|saade|sadhe|savaa|sava|sawa|paune|pone)\\s+' + HNUM + '\\s*(?:baje|bje|vajta|vajata|vaajta)?\\b'),
       fn: function (m) {
         var k = m[1].toLowerCase(), h = num(m[2]); if (isNaN(h) || h > 12) return null;
         if (/^s(a|aa)d/.test(k)) return T(h, 30, null);
         if (/^s(a|aw)v|^saw/.test(k)) return T(h, 15, null);
         return T(h === 1 ? 12 : h - 1, 45, null);
       } },
-    { cat: 'time', re: R('\\b(dedh|derh|dhai|dhaai|adhai|dhaayi)\\s*(?:baje|bje)\\b'), fn: function (m) { return /^de/i.test(m[1]) ? T(1, 30, null) : T(2, 30, null); } },
-    { cat: 'time', re: R('\\b' + PREP + HNUM + '(?:[:.](\\d{2}))?\\s*(?:baje|bje)\\b'), fn: function (m) { var h = num(m[1]); if (isNaN(h) || h > 23) return null; var t = T(h, +(m[2] || 0), null); if (h >= 13) t.exact = true; return t; } },
+    { cat: 'time', re: R('\\b(dedh|derh|deed|did|dhai|dhaai|adhai|dhaayi|adich|adeech)\\s*(?:baje|bje|vajta|vajata|vaajta)\\b'), fn: function (m) { return /^d(e|i)/i.test(m[1]) ? T(1, 30, null) : T(2, 30, null); } },
+    { cat: 'time', re: R('\\b' + PREP + HNUM + '(?:[:.](\\d{2}))?\\s*(?:baje|bje|vajta|vajata|vaajta)\\b'), fn: function (m) { var h = num(m[1]); if (isNaN(h) || h > 23) return null; var t = T(h, +(m[2] || 0), null); if (h >= 13) t.exact = true; return t; } },
     { cat: 'time', re: R('\\b(?:at|by|around|about|till|until|from)\\s+' + NUM + '(?:[:.\\s](\\d{2}|thirty|fifteen|forty[- ]five))?(?!\\s*(?:days?|weeks?|months?|years?|hours?|hrs?|minutes?|mins?|people|persons|percent|%|st|nd|rd|th|\\/|-\\d))\\b'),
       fn: function (m) {
         var h = num(m[1]); if (isNaN(h) || h > 23) return null;
@@ -308,7 +323,7 @@
     var am = AM_CTX.test(segText), pm = PM_CTX.test(segText);
     if (am && !pm) return { time: { h: v.h % 12, min: v.min } };
     if (pm && !am) {
-      if (/\b(night|raat)\b/i.test(segText) && v.h === 12) return { time: { h: 0, min: v.min } };
+      if (/\b(night|raat|ratri)\b/i.test(segText) && v.h === 12) return { time: { h: 0, min: v.min } };
       return { time: { h: (v.h % 12) + 12, min: v.min } };
     }
     return { ambiguous: { h: v.h, min: v.min } };
@@ -418,7 +433,7 @@
     '(?:i (?:also )?(?:have|got|\'ve got)\\s+(?:an?|my|another|one more)\\b|i\'ve got\\s+(?:an?|my)\\b|there(?:\'s| is)\\s+(?:an?|my)\\b|we have\\s+(?:an?)\\b|' +
     '(?:please\\s+)?remind me\\b(?!\\s+' + COUNT_WORDS_LEAD + '\\s*\\w*\\s+(?:before|earlier|pehle|in advance))|set (?:an?|my) (?:reminder|meeting|appointment)\\b|' +
     'i (?:need|have|want) to\\b|i must\\b|don\'t forget\\b|do not forget\\b|make sure\\b|remember to\\b|(?:another|one more|new) (?:idea|task|thing|reminder|appointment|meeting)\\b|' +
-    'idea\\s*[:,]|todo\\b|to-do\\b|schedule\\b|book (?:an?|my)\\b|mujhe\\b|to\\s+(?:' + 'call|buy|get|pay|send|email|book|pick up|check|order|submit|bring|renew|collect|meet|text|message' + ')\\b)', 'i');
+    'idea\\s*[:,]|todo\\b|to-do\\b|schedule\\b|book (?:an?|my)\\b|mujhe\\b|mala\\b|(?:majhi|maajhi|mazi|ajun ek)\\s+kalpana\\b|to\\s+(?:' + 'call|buy|get|pay|send|email|book|pick up|check|order|submit|bring|renew|collect|meet|text|message' + ')\\b)', 'i');
   var INNER_SPLIT = R('(?:,\\s*|\\s+)(?:and\\s+)?(?:also\\s+)?(?=(?:please\\s+)?remind me\\b(?!\\s+' + COUNT_WORDS_LEAD + '\\s*\\w*\\s+(?:before|earlier|pehle|in advance))|i (?:also )?have (?:an?|my|another)\\s+(?!idea)\\w|i need to\\b|i have to\\b|don\'t forget\\b|another idea\\b|one more (?:thing|idea)\\b)' +
     '|,?\\s+and also\\s+(?=to\\s+(?:call|buy|get|pay|send|email|book|pick up|check|order|submit|bring|renew|collect|meet|text|message)\\b)', 'gi');
   var LEAD_ONLY = R('^(?:and\\s+)?(?:please\\s+)?(?:remind me|alert me|notify me)\\s+' + CNT + '\\s*\\w+\\s+(?:before|earlier|pehle|in advance)', 'i');
@@ -437,7 +452,7 @@
     return out;
   }
 
-  function segment(text) {
+  function segment(text, now, st) {
     var pieces = [];
     splitSentences(text).forEach(function (s) {
       var idx = [0]; var m; INNER_SPLIT.lastIndex = 0;
@@ -449,7 +464,9 @@
     });
     var groups = [];
     pieces.forEach(function (p, i) {
-      var isNew = i === 0 || (STARTER.test(p.text) && !LEAD_ONLY.test(p.text));
+      var isNew = i === 0 || (STARTER.test(p.text) && !LEAD_ONLY.test(p.text)) ||
+        // a new sentence with its own appointment/reminder AND its own date or time is a separate item
+        (p.sentenceStart && now && (APPT_NOUN.test(p.text) || REMIND_CUE.test(p.text)) && scan(p.text, now, st).some(function (x) { return x.cat === 'date' || x.cat === 'time'; }));
       if (isNew) groups.push(p.text);
       else groups[groups.length - 1] += (p.sentenceStart ? ' ' : ', ') + p.text;
     });
@@ -457,17 +474,17 @@
   }
 
   // ---------------------------------------------------------------- classification
-  var APPT_NOUN = /\b(appointment|appt|meeting|interview|consultation|check-?up|session|class|lecture|flight|train|dinner|lunch|breakfast|party|wedding|function|event|visit|demo|presentation|webinar|call with|catch[- ]up|mulakat|doctor|dentist|hospital|clinic|surgery|exam)\b|अपॉइंटमेंट|अपोइंटमेंट|मीटिंग|डॉक्टर|मुलाकात/i;
-  var TASK_CUE = /\b(remind me|reminder|yaad dila\w*|need to|have to|has to|must|don't forget|do not forget|make sure|remember to|todo|to-do|task|karna hai|karna he)\b/i;
-  var REMIND_CUE = /\b(remind me|reminder|yaad dila\w*|alert me|notify me)\b/i;
+  var APPT_NOUN = /\b(appointment|appt|meeting|interview|consultation|check-?up|session|class|lecture|flight|train|dinner|lunch|breakfast|party|wedding|function|event|visit|demo|presentation|webinar|call with|catch[- ]up|mulakat|doctor|dentist|hospital|clinic|surgery|exam|bhet|mulakhat)\b|अपॉइंटमेंट|अपोइंटमेंट|मीटिंग|डॉक्टर|मुलाकात|भेट|मुलाखत|दवाखान/i;
+  var TASK_CUE = /\b(remind me|reminder|yaad dila\w*|need to|have to|has to|must|don't forget|do not forget|make sure|remember to|todo|to-do|task|karna hai|karna he|aathvan karun de|athvan karun de|aathavan karun de|lakshat aanun de|karaycha|karaychi|karayche|karaychay|bharaycha|jaycha|jaaycha|ghyaycha|aanaycha)\b/i;
+  var REMIND_CUE = /\b(remind me|reminder|yaad dila\w*|alert me|notify me|aathvan karun de|athvan karun de|aathavan karun de|lakshat aanun de)\b/i;
   var TASK_VERB = /^(?:please\s+)?(call|phone|ring|email|mail|message|text|whatsapp|buy|get|order|pay|send|submit|finish|complete|check|fix|renew|book|pick up|drop|collect|bring|clean|prepare|write|review|file|apply|transfer|deposit|withdraw|return|recharge|follow up|contact|ask|tell|share|print|update|upload|download)\b/i;
-  var IDEA_START = /^(?:(?:and|also|so|ok(?:ay)?|oh)[,\s]+)*(?:i (?:have|got|'ve got|also have)\s+(?:an?|another|one more)\s+(?:new\s+)?(?:idea|thought)|i've got\s+an?\s+idea|(?:another|one more|new)\s+(?:idea|thought)|idea\s*[:,.-]|thought\s*[:,.-]|note\s*[:,.-]|what if\b|how about\b)/i;
-  var IDEA_CUE = /\b(idea|what if|how about|we should|we could|we can|maybe we|brainstorm|concept|note to self)\b/i;
+  var IDEA_START = /^(?:(?:and|also|so|ok(?:ay)?|oh)[,\s]+)*(?:i (?:have|got|'ve got|also have)\s+(?:an?|another|one more)\s+(?:new\s+)?(?:idea|thought)|i've got\s+an?\s+idea|(?:another|one more|new)\s+(?:idea|thought)|idea\s*[:,.-]|thought\s*[:,.-]|note\s*[:,.-]|what if\b|how about\b|(?:majhi|maajhi|mazi|ek|ajun ek)\s+kalpana\b|kalpana\s*[:,.-])/i;
+  var IDEA_CUE = /\b(idea|what if|how about|we should|we could|we can|maybe we|brainstorm|concept|note to self|kalpana)\b/i;
 
   function classify(text, hasDate, hasTime) {
     if (IDEA_START.test(text)) return 'idea';
     if (APPT_NOUN.test(text) && !/\b(remind me to|yaad dila\w* ki)\b/i.test(text) &&
-        (hasDate || hasTime || /\b(i have|i've got|there is|there's|schedule|book|hai)\b/i.test(text))) return 'appointment';
+        (hasDate || hasTime || /\b(i have|i've got|there is|there's|schedule|book|hai|aahe|ahe)\b/i.test(text))) return 'appointment';
     var stripped = text.replace(/^(?:(?:and|also|so|ok(?:ay)?|please|to)[,\s]+)*/i, '');
     if (TASK_CUE.test(text) || TASK_VERB.test(stripped)) return 'task';
     if (IDEA_CUE.test(text)) return 'idea';
@@ -486,15 +503,17 @@
     /^(?:i (?:need|have|want|'ve got|got) to|i've got to|i must|i should|don't forget to|do not forget to|make sure (?:to|that i|i)|remember to|todo|to-do|task)\s*[:,]?\s*/i,
     /^(?:i (?:also )?(?:have|'ve got|got)|i've got|there(?:'s| is)|we have|i've)\s+(?:an?|my|the)\s+/i,
     /^(?:schedule|book|set up|add|create|set)\s+(?:an?|my|the)?\s*/i,
-    /^(?:mujhe|mujhko|meri|mera|mere)\s+/i,
+    /^(?:mujhe|mujhko|meri|mera|mere|mala|majhi|maajhi|mazi|maza|majha)\s+/i,
+    /^(?:ajun ek\s+|ek\s+)?kalpana\b[\s,.:;-]*/i,
     /^(?:please)\s+/i,
-    /^to\s+(?=\w)/i
+    /^to\s+(?=\w)/i,
+    /^(?:la|ko)\s+(?=\w)/i
   ];
   var STRIP_END = [
     /[\s,]+(?:yaad dila(?:na|ana|o|dena|dijiye)?|yaad dilana)(?:\s+(?:hai|he|h))?\s*$/i,
-    /[\s,]+(?:remind me|please)\s*$/i,
-    /[\s,]+(?:hai|hain|he|h|है|हैं)\s*$/i,
-    /[\s,]+(?:on|at|by|for|from|in|the|around|about|till|until|before|after|ko|ke|ka|ki|se|and|to|of|with)\s*$/i
+    /[\s,]+(?:remind me|please|aathvan karun de|athvan karun de|aathavan karun de|lakshat aanun de)\s*$/i,
+    /[\s,]+(?:hai|hain|he|h|aahe|ahe|aahet|है|हैं|आहे|आहेत)\s*$/i,
+    /[\s,]+(?:on|at|by|for|from|in|the|around|about|till|until|before|after|ko|ke|ka|ki|se|la|and|to|of|with)\s*$/i
   ];
   function stripStart(s) { var prev; do { prev = s; for (var i = 0; i < STRIP_START.length; i++) s = s.replace(STRIP_START[i], ''); } while (s !== prev); return s; }
   function stripEnd(s) { var prev; do { prev = s; s = s.replace(/[\s,.;:!?—–-]+$/, ''); for (var i = 0; i < STRIP_END.length; i++) s = s.replace(STRIP_END[i], ''); } while (s !== prev); return s; }
@@ -642,6 +661,10 @@
     var what = item.title ? '“' + item.title + '”' : 'this';
     if (item.kind === 'idea') { if (p.confirmWords && p.confirmWords.length) qs.push(q('confirm', 'I heard “' + p.confirmWords[0] + '” — is that right?', ['Yes', 'Edit'])); return qs; }
     var needsDate = item.kind === 'appointment' || (item.kind === 'task' && item.reminder);
+    if (item.date && cmpDate(item.date, today(now)) < 0 && !p.invalidDate) {
+      qs.push(q('past', fmtDate(item.date, now) + ' is in the past. Which date did you mean? (Or discard if this was about something that already happened.)', []));
+      return qs;
+    }
     if (p.invalidDate) qs.push(q('date', '“' + p.invalidDate + '” isn’t a valid date. Which date did you mean?', []));
     else if (p.dateOptions) qs.push(q('date', 'Which day for ' + what + '?', p.dateOptions));
     else if (p.vagueDate && needsDate) qs.push(q('date', 'Which day “' + p.vagueDate + '”?', []));
@@ -881,7 +904,7 @@
       result.updates.push(parseEdit(text, input, st));
     } else {
       // a piece that is only a date/time ("Next Friday, I have a flight…") belongs to the next piece
-      var segs = segment(text), merged = [], carry = '';
+      var segs = segment(text, input.now, st), merged = [], carry = '';
       segs.forEach(function (seg, i) {
         seg = carry ? carry + ' ' + seg : seg; carry = '';
         if (i < segs.length - 1 && isBare(seg, input.now, st)) carry = seg; else merged.push(seg);

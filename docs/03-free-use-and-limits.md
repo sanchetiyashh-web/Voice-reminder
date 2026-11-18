@@ -39,7 +39,8 @@ Apple only allows a permanent install (TestFlight or 1-year signing) through the
 ## Feature limits (honest list)
 - **Repeating reminders** ("every day") are not supported. The app saves them once and tells you.
 - **No background or always-on listening, no custom wake word, no recording from the locked screen.** These are iOS restrictions. Use the mic button, Siri, the Action button, Back Tap or a Control Center shortcut.
-- **Mixed Hindi-English** depends on Apple's recognizer for one language at a time. Expect more errors than with English.
+- **Languages.** Speech: English (India) and Hindi via Apple. **Marathi speech is not supported by Apple.** Speak Marathi with English (India) selected (Roman-script Marathi date/time words are understood, but expect mis-heard words), or type it. Understanding covers English, Hindi and Marathi in Roman or Devanagari script, mixed in one sentence. Apple's recognizer listens in one language at a time; switch with the globe button.
+- Voice **edits** ("move my appointment…", "cancel…") are understood in English only.
 - Understanding is rule-based, not an LLM. It is predictable, private and free, but unusual phrasings may need a follow-up question or a quick edit.
 - **Importing a backup doesn't recreate Calendar events** automatically. Open an appointment and tap Retry.
 - No app icon yet (iOS shows a blank icon).

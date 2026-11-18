@@ -21,7 +21,7 @@ struct SettingsView: View {
                     Picker("Language", selection: $settings.localeId) {
                         ForEach(AppSettings.languages, id: \.id) { Text($0.name).tag($0.id) }
                     }
-                    LabeledContent("On-device recognition", value: SpeechRecorder.onDeviceSupported(settings.localeId) ? "Available" : "Not available")
+                    LabeledContent("On-device recognition", value: !SpeechRecorder.recognizerExists(settings.localeId) ? "Language not supported by Apple" : (SpeechRecorder.onDeviceSupported(settings.localeId) ? "Available" : "Not available"))
                     Toggle("Allow Apple server recognition", isOn: $settings.allowServerRecognition)
                     Picker("Stop after silence", selection: $settings.autoStopSilenceSec) {
                         Text("Only when I tap Stop").tag(0)
@@ -29,7 +29,7 @@ struct SettingsView: View {
                     }
                     Toggle("Keep recording until processed", isOn: $settings.keepAudioUntilProcessed)
                 } header: { Text("Listening") } footer: {
-                    Text("Speech stays on your iPhone when on-device recognition is available. Server recognition is used only if on-device isn't available for the chosen language and you turn it on — your audio is then sent to Apple. The temporary recording lets you retry a failed transcription; it's deleted after a successful save and never kept long-term. For mixed Hindi-English, English (India) usually works best; choose Hindi for mostly-Hindi speech.")
+                    Text("Speech stays on your iPhone when on-device recognition is available. Server recognition is used only if on-device isn't available for the chosen language and you turn it on — your audio is then sent to Apple. The temporary recording lets you retry a failed transcription; it's deleted after a successful save and never kept long-term. For mixed Hindi/Marathi/English speech, English (India) usually works best; choose Hindi for mostly-Hindi speech. Apple doesn't offer Marathi speech recognition yet — speak with English (India), or type Marathi (Devanagari or Roman), which is fully understood. Switch language anytime with the globe button on the capture screen.")
                 }
 
                 Section {
