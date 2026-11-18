@@ -65,5 +65,10 @@ What to expect, from Apple's docs and general knowledge, unverified for your voi
 - Whether on-device `hi-IN` is available depends on your iPhone and iOS version; the app shows this in Settings and never silently falls back to Apple's servers.
 - **Marathi (`mr-IN`) is not offered by Apple's speech recognition** (checked against Apple's iOS 27 feature-availability page, Dictation section, Nov 2026). The app says so if you pick it, and offers English (India) or typing instead.
 
+## 2b. Whisper for Marathi / mixed speech: **implemented, not tested**
+WhisperKit 1.1.1 (Core ML) with OpenAI Whisper *large-v3 (547 MB)* or *small (216 MB)*, language forced to Marathi (`mr`) or auto-detected. Nothing has been measured yet. Published results suggest Whisper's Marathi accuracy is clearly below its English accuracy, and *small* is much weaker than *large-v3*. Expect some mis-heard words; the transcript is always shown and editable before you rely on it. The Speech test screen includes 4 Marathi sentences and reports WER and "text ready N s after stop". Note: Whisper may write numbers as words (दहा) or digits (10). The engine understands both, but WER counts the difference as an error.
+
+Understanding of Whisper-style Devanagari output (loanwords like कॉल, अपॉइंटमेंट, मिटिंग): 4 new cases, **4/4 on first run** (Marathi set now 23/23).
+
 ## 3. App (Swift): **implemented, unverified**
 Not compiled yet: no macOS here. The first compile happens in the GitHub Actions workflow. I reviewed the code and fixed one definite compile error, but expect a few compile errors on the first run; send me the build log.

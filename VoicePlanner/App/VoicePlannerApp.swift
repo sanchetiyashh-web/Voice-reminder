@@ -11,6 +11,7 @@ final class AppModel: ObservableObject {
     let notifications = NotificationService()
     let engine = UnderstandingEngine()
     let speaker = Speaker()
+    let whisper = WhisperService()
     lazy var executor = Executor(store: store, settings: settings, calendar: calendar, notifications: notifications, engine: engine)
 
     /// Set by the "Start listening" Siri/Shortcuts intent; the UI opens the recorder.
@@ -43,6 +44,7 @@ struct VoicePlannerApp: App {
                 .environmentObject(model.settings)
                 .environmentObject(model.executor)
                 .environmentObject(model.calendar)
+                .environmentObject(model.whisper)
                 .onChange(of: phase) { _, p in
                     if p == .active {
                         model.calendar.refreshStatus()

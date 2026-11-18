@@ -14,6 +14,10 @@ final class CaptureModel: ObservableObject {
     @Published var timing: String?
     let recorder = SpeechRecorder()
     private var app: AppModel { AppModel.shared }
+    private var whisperSeconds: Double?
+
+    /// Marathi and auto-detect go through on-device Whisper (after recording); others use Apple live.
+    var usesWhisper: Bool { WhisperService.usesWhisper(app.settings.localeId) }
 
     init() {
         recorder.onAutoStop = { [weak self] in Task { await self?.stop() } }
@@ -22,12 +26,20 @@ final class CaptureModel: ObservableObject {
     func start(forAnswer: Bool = false) async {
         answeringByVoice = forAnswer
         if !forAnswer { lines = []; corrections = []; text = ""; timing = nil }
-        phase = .listening
+        whisperSeconds = nil
         let s = app.settings
+        if usesWhisper && !app.whisper.isDownloaded {
+            phase = .failed; answeringByVoice = false
+            status = "Marathi and mixed speech use an on-device Whisper model that isn't downloaded yet. Open Settings › Marathi & mixed speech › Download (one time, \(app.whisper.selectedOption.sizeMB) MB). Or switch language with the globe button, or type."
+            return
+        }
+        phase = .listening
+        if usesWhisper { Task { try? await app.whisper.load() } }   // warm up while you speak
         await recorder.start(localeId: s.localeId, allowServer: s.allowServerRecognition,
                              contextualStrings: app.contextualStrings(),
                              silenceSec: forAnswer ? 3 : s.autoStopSilenceSec,
-                             keepAudio: s.keepAudioUntilProcessed && !forAnswer)
+                             keepAudio: s.keepAudioUntilProcessed && !forAnswer,
+                             recognize: !usesWhisper)
         if let msg = recorder.failureMessage {
             phase = .failed; status = msg; answeringByVoice = false
         }
@@ -35,8 +47,22 @@ final class CaptureModel: ObservableObject {
 
     func stop() async {
         guard recorder.state == .listening else { return }
-        let t = await recorder.stop()
+        var t = await recorder.stop()
+        if usesWhisper {
+            phase = .processing
+            status = "Transcribing on your iPhone (Whisper)…"
+            do {
+                t = try await app.whisper.transcribe(fileURL: recorder.audioFileURL, language: WhisperService.whisperLanguage(app.settings.localeId))
+                whisperSeconds = app.whisper.lastTranscribeSeconds
+            } catch {
+                answeringByVoice = false
+                phase = .failed
+                status = "Transcription failed: \(error.localizedDescription) Your recording is kept — tap Retry transcription, or type."
+                return
+            }
+        }
         if answeringByVoice {
+            if usesWhisper { recorder.discardAudio() }
             answeringByVoice = false
             answerText = t
             phase = .asking
@@ -64,7 +90,8 @@ final class CaptureModel: ObservableObject {
         lines.append(contentsOf: out.lines)
         corrections = out.corrections
         var timingParts: [String] = []
-        if let a = recorder.stopTappedAt, let b = recorder.finalResultAt { timingParts.append(String(format: "speech final %.1fs after stop", b.timeIntervalSince(a))) }
+        if let w = whisperSeconds { timingParts.append(String(format: "Whisper transcription %.1fs", w)) }
+        else if let a = recorder.stopTappedAt, let b = recorder.finalResultAt { timingParts.append(String(format: "speech final %.1fs after stop", b.timeIntervalSince(a))) }
         timingParts.append(String(format: "understand+save %.2fs", Date().timeIntervalSince(started)))
         timing = timingParts.joined(separator: " · ")
         if out.engineFailed {
@@ -106,7 +133,12 @@ final class CaptureModel: ObservableObject {
     func retryTranscription() async {
         phase = .processing; status = "Transcribing the kept recording…"
         do {
-            text = try await recorder.transcribeKeptAudio(localeId: app.settings.localeId, allowServer: app.settings.allowServerRecognition)
+            if usesWhisper {
+                text = try await app.whisper.transcribe(fileURL: recorder.audioFileURL, language: WhisperService.whisperLanguage(app.settings.localeId))
+                whisperSeconds = app.whisper.lastTranscribeSeconds
+            } else {
+                text = try await recorder.transcribeKeptAudio(localeId: app.settings.localeId, allowServer: app.settings.allowServerRecognition)
+            }
             recorder.clearFailure()
             if text.isEmpty { phase = .failed; status = "Still no words recognised. Type instead." } else { await process() }
         } catch {
@@ -233,13 +265,13 @@ struct CaptureView: View {
 private struct LanguageMenu: View {
     let disabled: Bool
     @EnvironmentObject private var settings: AppSettings
-    private let short = ["en-IN": "EN", "hi-IN": "हिं", "mr-IN": "मरा", "en-US": "US", "en-GB": "UK"]
+    private let short = ["en-IN": "EN", "hi-IN": "हिं", "mr-IN": "मरा", "auto": "Mix", "en-US": "US", "en-GB": "UK"]
 
     var body: some View {
         Menu {
             Picker("Speech language", selection: $settings.localeId) {
                 ForEach(AppSettings.languages, id: \.id) { l in
-                    Text(l.name + (SpeechRecorder.recognizerExists(l.id) ? "" : " (Apple: not supported)")).tag(l.id)
+                    Text(l.name).tag(l.id)
                 }
             }
         } label: {
@@ -264,7 +296,7 @@ private struct StatusHeader: View {
                 Image(systemName: "waveform").symbolEffect(.variableColor.iterative).foregroundStyle(.red)
                 VStack(alignment: .leading) {
                     Text(answering ? "Listening for your answer…" : "Listening… take your time").font(.headline)
-                    Text(recorder.onDevice ? "On-device recognition" : "Apple server recognition (you allowed this)").font(.caption).foregroundStyle(.secondary)
+                    Text(!recorder.recognizing ? "Recording — Whisper transcribes on your iPhone when you stop" : (recorder.onDevice ? "On-device recognition" : "Apple server recognition (you allowed this)")).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 LevelBar(level: recorder.level)
@@ -304,7 +336,7 @@ private struct LiveTranscript: View {
             .padding()
             .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
             .overlay(alignment: .topLeading) {
-                if recorder.transcript.isEmpty { Text("Start speaking…").foregroundStyle(.tertiary).padding() }
+                if recorder.transcript.isEmpty { Text(recorder.recognizing ? "Start speaking…" : "Speak in Marathi (or mixed). Text appears after you tap Stop.").foregroundStyle(.tertiary).padding() }
             }
     }
 }

@@ -23,12 +23,19 @@ struct SpeechTestView: View {
         "Dinner with Priya on 25 December at 4 PM",
         "Kal subah 10 baje mujhe supplier ko call karna yaad dilana",
         "Parson shaam 5 baje dentist ka appointment hai",
-        "Remind me to buy groceries tomorrow at 6 PM and I have a meeting with the bank on Monday at 10 AM"
+        "Remind me to buy groceries tomorrow at 6 PM and I have a meeting with the bank on Monday at 10 AM",
+        // Marathi (choose Marathi · Whisper first)
+        "उद्या सकाळी दहा वाजता सप्लायरला कॉल करायचा आहे आठवण करून दे",
+        "परवा संध्याकाळी पाच वाजता डेंटिस्टची अपॉइंटमेंट आहे",
+        "पुढच्या सोमवारी दुपारी तीन वाजता बँकेत मीटिंग आहे",
+        "Udya sakali 9 vajta Rahul la call karaycha aahe"
     ]
 
     @StateObject private var recorder = SpeechRecorder()
     @EnvironmentObject private var settings: AppSettings
     @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var whisper: WhisperService
+    @State private var transcribing = false
     @State private var current: String?
     @State private var results: [Result] = []
     @State private var pauseNote = true
@@ -36,7 +43,7 @@ struct SpeechTestView: View {
     var body: some View {
         List {
             Section {
-                Text("Tap a sentence, read it naturally (pauses, your normal accent), then tap Stop. Language: \(settings.localeId). Try each phrase in a quiet room and with background noise.")
+                Text("Tap a sentence, read it naturally (pauses, your normal accent), then tap it again to stop. Language: \(settings.localeId)\(WhisperService.usesWhisper(settings.localeId) ? " (Whisper)" : " (Apple)"). Try each phrase in a quiet room and with background noise. Number words vs digits (दहा vs 10) count as errors in WER even when the meaning is right.")
                     .font(.footnote)
                 Toggle("Pause 2–3 s in the middle of each sentence", isOn: $pauseNote).font(.footnote)
             }
@@ -55,8 +62,9 @@ struct SpeechTestView: View {
                 }
             }
             if current != nil {
-                Section("Hearing") { Text(recorder.transcript.isEmpty ? "…" : recorder.transcript) }
+                Section("Hearing") { Text(recorder.recognizing ? (recorder.transcript.isEmpty ? "…" : recorder.transcript) : "Recording… (Whisper transcribes after you stop)") }
             }
+            if transcribing { Section { HStack { ProgressView(); Text("Transcribing with Whisper…") } } }
             if let msg = recorder.failureMessage { Section { Text(msg).foregroundStyle(.red) } }
             if !results.isEmpty {
                 Section("Results") {
@@ -66,7 +74,7 @@ struct SpeechTestView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Said: \(r.reference)").font(.caption)
                             Text("Heard: \(r.heard)").font(.caption).foregroundStyle(.secondary)
-                            Text(String(format: "WER %.0f%%", r.wer * 100) + (r.latency.map { String(format: " · final text %.1fs after stop", $0) } ?? "")).font(.caption2)
+                            Text(String(format: "WER %.0f%%", r.wer * 100) + (r.latency.map { String(format: " · text ready %.1fs after stop", $0) } ?? "")).font(.caption2)
                             Text("Understood: \(r.understood)").font(.caption2).foregroundStyle(.secondary)
                         }
                     }
@@ -80,16 +88,26 @@ struct SpeechTestView: View {
 
     private func toggle(_ phrase: String) async {
         if current == phrase {
-            let heard = await recorder.stop()
+            var heard = await recorder.stop()
             current = nil
-            recorder.discardAudio()
             var latency: Double? = nil
-            if let a = recorder.stopTappedAt, let b = recorder.finalResultAt { latency = b.timeIntervalSince(a) }
+            if WhisperService.usesWhisper(settings.localeId) {
+                transcribing = true
+                heard = (try? await whisper.transcribe(fileURL: recorder.audioFileURL, language: WhisperService.whisperLanguage(settings.localeId))) ?? ""
+                latency = whisper.lastTranscribeSeconds
+                transcribing = false
+            } else if let a = recorder.stopTappedAt, let b = recorder.finalResultAt {
+                latency = b.timeIntervalSince(a)
+            }
+            recorder.discardAudio()
             results.insert(Result(reference: phrase, heard: heard, wer: Self.wer(phrase, heard), latency: latency, understood: understand(heard)), at: 0)
         } else {
+            let useWhisper = WhisperService.usesWhisper(settings.localeId)
+            if useWhisper && !whisper.isDownloaded { return }
             current = phrase
             await recorder.start(localeId: settings.localeId, allowServer: settings.allowServerRecognition,
-                                 contextualStrings: model.contextualStrings(), silenceSec: 0, keepAudio: false)
+                                 contextualStrings: model.contextualStrings(), silenceSec: 0, keepAudio: useWhisper,
+                                 recognize: !useWhisper)
             if recorder.isFailed { current = nil }
         }
     }

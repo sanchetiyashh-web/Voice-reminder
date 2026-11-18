@@ -14,7 +14,7 @@ Everything runs on the iPhone: Apple's on-device speech recognition, a bundled u
 | Part | Status |
 |---|---|
 | Understanding engine (`engine/understanding.js`) | **Tested**: 53/53 corpus cases, 6/6 follow-up flows; held-out set **16/20 on first run**; Marathi/mixed **17/19 on first run** (all fixed afterwards) |
-| Languages | Understands English, Hindi, Marathi (Roman or Devanagari, mixed). Speech via Apple: English (India), Hindi. **Apple has no Marathi speech recognition.** |
+| Languages | Understands English, Hindi, Marathi (Roman or Devanagari, mixed). Speech: English (India) and Hindi via Apple (live); **Marathi and Mixed/auto-detect via on-device Whisper** (text after you stop; one-time model download). Whisper is implemented but untested on a device. |
 | iOS app (`VoicePlanner/`, SwiftUI) | **Implemented, not yet compiled** (no Mac here). First compile happens in GitHub Actions. |
 | Speech accuracy on your voice | **Not tested**; use the in-app Speech test |
 | Calendar, notifications, Siri, Undo, export | Implemented, unverified on a device |
@@ -40,6 +40,9 @@ Everything runs on the iPhone: Apple's on-device speech recognition, a bundled u
 2. Settings › General › VPN & Device Management → trust your Apple ID.
 3. Open **Voice Planner** and tap the mic. Allow Microphone, Speech Recognition, Calendar (**Full Access**) and Notifications when asked.
 4. In the app's Settings, choose your language (English (India) recommended) and the calendar for appointments.
+
+### Marathi speech (one time)
+In the app: Settings › **Marathi & mixed speech** › pick *Large v3* (547 MB, best) or *Small* (216 MB, faster) › **Download** on Wi-Fi › **Prepare now**. The first preparation can take a few minutes. Then choose **मरा** (Marathi) or **Mix** with the globe button on the capture screen.
 
 ### Every 7 days
 Refresh in AltStore (or automatically), or re-install the same `.ipa` with Sideloadly. Your data stays.

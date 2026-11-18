@@ -16,6 +16,15 @@ Settings › **Speech accuracy test**. For each of the 10 phrases:
 - Repeat with language **Hindi** for the two Hinglish phrases.
 - Share the CSV with me. It gives WER, seconds to final text, and what the engine understood.
 
+## B2. Marathi with Whisper
+1. Settings › Marathi & mixed speech › Download (Wi-Fi). Note download time, then **Prepare now** and note how long preparation takes.
+2. Globe button → **मरा**. Say: "उद्या सकाळी दहा वाजता सप्लायरला कॉल करायचा आहे, आठवण करून दे" → expected: task tomorrow 10:00 AM. Note the "Whisper transcription N s" timing shown.
+3. "परवा संध्याकाळी पाच वाजता डेंटिस्टची अपॉइंटमेंट आहे" → appointment day after tomorrow 5 PM in Calendar.
+4. Globe → **Mix**. Say a Marathi-English mix ("Udya sakali 9 vajta Rahul la call karaycha aahe").
+5. Run the 4 Marathi phrases in the Speech test (with Marathi · Whisper selected) and share the CSV.
+6. Try Small vs Large if you have the space: compare WER and time.
+7. Airplane mode after download: Marathi still works (fully offline).
+
 ## C. Core flow: speak → transcribe → understand → save → calendar/task → alerts
 | # | Say | Expected |
 |---|---|---|

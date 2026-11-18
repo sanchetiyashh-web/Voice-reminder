@@ -42,6 +42,8 @@ final class SpeechRecorder: ObservableObject {
     @Published private(set) var partial = ""
     @Published private(set) var level: Float = 0
     @Published private(set) var onDevice = false
+    /// false = record-only (audio is transcribed afterwards by Whisper).
+    @Published private(set) var recognizing = true
 
     var transcript: String { [committed, partial].filter { !$0.isEmpty }.joined(separator: " ") }
     private(set) var lowConfidenceWords: [String] = []
@@ -66,6 +68,7 @@ final class SpeechRecorder: ObservableObject {
     private var allowServer = false
     private var contextual: [String] = []
     private var interruptionObserver: NSObjectProtocol?
+    private var heardSound = false
 
     var isFailed: Bool { if case .failed = state { return true }; return false }
     var failureMessage: String? { if case .failed(let m) = state { return m }; return nil }
@@ -86,19 +89,30 @@ final class SpeechRecorder: ObservableObject {
         SFSpeechRecognizer(locale: Locale(identifier: localeId))?.supportsOnDeviceRecognition ?? false
     }
 
-    func start(localeId: String, allowServer: Bool, contextualStrings: [String], silenceSec: Int, keepAudio: Bool) async {
+    /// - Parameter recognize: false = record-only mode for Whisper (no Apple recognizer; audio file always kept).
+    func start(localeId: String, allowServer: Bool, contextualStrings: [String], silenceSec: Int, keepAudio: Bool, recognize: Bool = true) async {
         switch state { case .idle, .failed: break; default: return }
         state = .starting
         committed = ""; partial = ""; lowConfidenceWords = []; level = 0
-        stopTappedAt = nil; finalResultAt = nil; consecutiveErrors = 0
+        stopTappedAt = nil; finalResultAt = nil; consecutiveErrors = 0; heardSound = false
+        recognizing = recognize
         discardAudio()
+
+        if !recognize {
+            let mic = await AVAudioApplication.requestRecordPermission()
+            guard mic else { return fail("Microphone access is off. Turn it on in Settings › Voice Planner, or type instead.") }
+            recognizer = nil
+            onDevice = true
+            await startAudio(keepAudio: true, silenceSec: silenceSec)
+            return
+        }
 
         let perms = await Self.requestPermissions()
         guard perms.mic else { return fail("Microphone access is off. Turn it on in Settings › Voice Planner, or type instead.") }
         guard perms.speech else { return fail("Speech Recognition access is off. Turn it on in Settings › Voice Planner, or type instead.") }
         guard let rec = SFSpeechRecognizer(locale: Locale(identifier: localeId)) else {
             if localeId.hasPrefix("mr") {
-                return fail("Apple's speech recognition doesn't support Marathi yet. Switch to English (India) with the globe button and speak — Marathi date/time words like udya, parva, vajta are understood — or tap Type and write in Marathi (Devanagari or Roman), which is fully understood.")
+                return fail("Apple's speech recognition doesn't support Marathi. Marathi uses the on-device Whisper model instead — download it in Settings › Marathi & mixed speech.")
             }
             return fail("Speech recognition doesn't support \(localeId) on this iPhone. Choose another language, or type.")
         }
@@ -111,7 +125,10 @@ final class SpeechRecorder: ObservableObject {
         self.allowServer = allowServer
         contextual = Array(contextualStrings.prefix(100))
         onDevice = rec.supportsOnDeviceRecognition
+        await startAudio(keepAudio: keepAudio, silenceSec: silenceSec)
+    }
 
+    private func startAudio(keepAudio: Bool, silenceSec: Int) async {
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
@@ -128,10 +145,10 @@ final class SpeechRecorder: ObservableObject {
                 Task { @MainActor in
                     guard let self else { return }
                     self.level = v
-                    if v > 0.03 { self.lastActivity = Date() }
+                    if v > 0.03 { self.lastActivity = Date(); self.heardSound = true }
                 }
             }
-            startRequest()
+            if recognizer != nil { startRequest() }
             input.removeTap(onBus: 0)
             let s = sink
             input.installTap(onBus: 0, bufferSize: 2048, format: format) { buffer, _ in s.append(buffer) }
@@ -151,7 +168,7 @@ final class SpeechRecorder: ObservableObject {
         silenceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.state == .listening, self.silenceLimit > 0 else { return }
-                if Date().timeIntervalSince(self.lastActivity) > self.silenceLimit && !self.transcript.isEmpty { self.onAutoStop?() }
+                if Date().timeIntervalSince(self.lastActivity) > self.silenceLimit && (!self.transcript.isEmpty || (!self.recognizing && self.heardSound)) { self.onAutoStop?() }
             }
         }
         state = .listening
@@ -224,6 +241,13 @@ final class SpeechRecorder: ObservableObject {
         request?.endAudio()
         sink.setRequest(nil)
         sink.setFile(nil)            // closes the temp file
+        if task == nil {             // record-only mode: nothing to wait for
+            finalResultAt = Date()
+            teardownAudio()
+            stopping = false
+            state = .idle
+            return transcript
+        }
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
             stopContinuation = c
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in

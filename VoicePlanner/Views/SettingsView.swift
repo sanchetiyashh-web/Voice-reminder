@@ -6,6 +6,7 @@ struct SettingsView: View {
     @EnvironmentObject private var settings: AppSettings
     @EnvironmentObject private var store: ItemStore
     @EnvironmentObject private var calendar: CalendarService
+    @EnvironmentObject private var whisper: WhisperService
     @Environment(\.dismiss) private var dismiss
     @State private var exportURL: URL?
     @State private var importing = false
@@ -21,7 +22,7 @@ struct SettingsView: View {
                     Picker("Language", selection: $settings.localeId) {
                         ForEach(AppSettings.languages, id: \.id) { Text($0.name).tag($0.id) }
                     }
-                    LabeledContent("On-device recognition", value: !SpeechRecorder.recognizerExists(settings.localeId) ? "Language not supported by Apple" : (SpeechRecorder.onDeviceSupported(settings.localeId) ? "Available" : "Not available"))
+                    LabeledContent("Recognition", value: WhisperService.usesWhisper(settings.localeId) ? "Whisper on iPhone (after you stop)" : (!SpeechRecorder.recognizerExists(settings.localeId) ? "Language not supported by Apple" : (SpeechRecorder.onDeviceSupported(settings.localeId) ? "Apple, on-device, live" : "Apple on-device not available")))
                     Toggle("Allow Apple server recognition", isOn: $settings.allowServerRecognition)
                     Picker("Stop after silence", selection: $settings.autoStopSilenceSec) {
                         Text("Only when I tap Stop").tag(0)
@@ -29,7 +30,38 @@ struct SettingsView: View {
                     }
                     Toggle("Keep recording until processed", isOn: $settings.keepAudioUntilProcessed)
                 } header: { Text("Listening") } footer: {
-                    Text("Speech stays on your iPhone when on-device recognition is available. Server recognition is used only if on-device isn't available for the chosen language and you turn it on — your audio is then sent to Apple. The temporary recording lets you retry a failed transcription; it's deleted after a successful save and never kept long-term. For mixed Hindi/Marathi/English speech, English (India) usually works best; choose Hindi for mostly-Hindi speech. Apple doesn't offer Marathi speech recognition yet — speak with English (India), or type Marathi (Devanagari or Roman), which is fully understood. Switch language anytime with the globe button on the capture screen.")
+                    Text("Speech stays on your iPhone when on-device recognition is available. Server recognition is used only if on-device isn't available for the chosen language and you turn it on — your audio is then sent to Apple. The temporary recording lets you retry a failed transcription; it's deleted after a successful save and never kept long-term. For mixed Hindi/Marathi/English speech, English (India) usually works best; choose Hindi for mostly-Hindi speech. Apple doesn't offer Marathi speech recognition, so Marathi and Mixed/auto-detect use the Whisper model below, entirely on your iPhone. Switch language anytime with the globe button on the capture screen.")
+                }
+
+                Section {
+                    Picker("Model", selection: $whisper.selectedModel) {
+                        ForEach(WhisperService.models) { m in Text("\(m.name) (\(m.sizeMB) MB)").tag(m.id) }
+                    }
+                    .disabled(isBusy)
+                    Text(whisper.selectedOption.note).font(.footnote).foregroundStyle(.secondary)
+                    switch whisper.state {
+                    case .notDownloaded:
+                        Button("Download (\(whisper.selectedOption.sizeMB) MB, one time)") { Task { await whisper.download() } }
+                    case .downloading(let f):
+                        ProgressView(value: f) { Text("Downloading… \(Int(f * 100))%") }
+                    case .downloaded:
+                        LabeledContent("Status", value: "Downloaded")
+                        Button("Prepare now (speeds up first use)") { Task { try? await whisper.load() } }
+                    case .loading:
+                        HStack { ProgressView(); Text("Preparing model — the first time can take a few minutes") }
+                    case .ready:
+                        LabeledContent("Status", value: "Ready")
+                    case .failed(let msg):
+                        Text(msg).font(.footnote).foregroundStyle(.red)
+                        Button(whisper.isDownloaded ? "Try preparing again" : "Try download again") {
+                            Task { if whisper.isDownloaded { try? await whisper.load() } else { await whisper.download() } }
+                        }
+                    }
+                    if whisper.isDownloaded && !isBusy {
+                        Button("Delete model", role: .destructive) { whisper.deleteModel() }
+                    }
+                } header: { Text("Marathi & mixed speech (Whisper)") } footer: {
+                    Text("Whisper is a free, open-source speech model (OpenAI, MIT licence) run with WhisperKit. The model file is downloaded once from Hugging Face — use Wi-Fi. Nothing you say is uploaded: transcription happens on your iPhone. Text appears after you tap Stop, not live. Marathi accuracy is lower than English; check the transcript before it matters.")
                 }
 
                 Section {
@@ -106,6 +138,13 @@ struct SettingsView: View {
                 } catch { message = "Import failed: \(error.localizedDescription)" }
             }
             .onAppear { calendar.refreshStatus() }
+        }
+    }
+
+    private var isBusy: Bool {
+        switch whisper.state {
+        case .downloading, .loading: return true
+        default: return false
         }
     }
 

@@ -34,6 +34,16 @@
     { id: 'mr12', text: 'माझी कल्पना: दुकानात नवीन पॅकेजिंग वापरूया',
       expect: { items: [{ kind: 'idea', q: [] }] } },
 
+    // ---- Whisper-style output (Devanagari with English loanwords)
+    { id: 'mr13', text: 'उद्या सकाळी दहा वाजता सप्लायरला कॉल करायचा आहे आठवण करून दे',
+      expect: { items: [{ kind: 'task', date: '2026-11-19', time: '10:00', q: [] }] } },
+    { id: 'mr14', text: 'परवा संध्याकाळी पाच वाजता डेंटिस्टची अपॉइंटमेंट आहे',
+      expect: { items: [{ kind: 'appointment', title: 'डेंटिस्टची अपॉइंटमेंट', date: '2026-11-20', time: '17:00', q: [] }] } },
+    { id: 'mr15', text: 'पुढच्या शुक्रवारी मिटिंग आहे',
+      expect: { items: [{ kind: 'appointment', date: '2026-11-20', q: ['time'] }] } },
+    { id: 'mr16', text: 'मला उद्या बँकेत जायचं आहे',
+      expect: { items: [{ kind: 'task', date: '2026-11-19', time: null, q: [] }] } },
+
     // ---- mixed Marathi + Hindi + English
     { id: 'mx01', text: 'Tomorrow sakali 9 vajta Rahul la call karna hai',
       expect: { items: [{ kind: 'task', date: '2026-11-19', time: '09:00', q: [] }] } },

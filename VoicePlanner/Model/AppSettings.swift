@@ -42,6 +42,6 @@ final class AppSettings: ObservableObject {
     }
 
     static let languages: [(id: String, name: String)] = [
-        ("en-IN", "English (India)"), ("hi-IN", "Hindi (हिन्दी)"), ("mr-IN", "Marathi (मराठी)"), ("en-US", "English (US)"), ("en-GB", "English (UK)")
+        ("en-IN", "English (India)"), ("hi-IN", "Hindi (हिन्दी)"), ("mr-IN", "Marathi (मराठी) · Whisper"), ("auto", "Mixed / auto-detect · Whisper"), ("en-US", "English (US)"), ("en-GB", "English (UK)")
     ]
 }
