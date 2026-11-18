@@ -41,6 +41,13 @@ struct ContentView: View {
                 .pickerStyle(.segmented)
                 .padding([.horizontal, .top])
 
+                if let exp = model.signingExpiry, exp.timeIntervalSinceNow < 2 * 86400 {
+                    Label("App signature: \(SigningInfo.remainingText(exp)). Open SideStore › Refresh All to keep using the app.", systemImage: "clock.badge.exclamationmark")
+                        .font(.footnote)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                        .background(Color.orange.opacity(0.15))
+                }
                 if let err = store.loadError {
                     Text(err).font(.footnote).foregroundStyle(.red).padding(.horizontal)
                 }

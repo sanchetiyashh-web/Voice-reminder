@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var store: ItemStore
     @EnvironmentObject private var calendar: CalendarService
     @EnvironmentObject private var whisper: WhisperService
+    @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
     @State private var exportURL: URL?
     @State private var importing = false
@@ -119,6 +120,15 @@ struct SettingsView: View {
                     if let m = message { Text(m).font(.footnote) }
                 } header: { Text("Data") } footer: {
                     Text("\(store.items.count) items stored on this iPhone only. Save the backup to Files/iCloud Drive. Deleting the app deletes its data.")
+                }
+
+                if let exp = model.signingExpiry {
+                    Section {
+                        LabeledContent("Valid until", value: exp.formatted(date: .abbreviated, time: .shortened))
+                        LabeledContent("Remaining", value: SigningInfo.remainingText(exp))
+                    } header: { Text("App signature") } footer: {
+                        Text("Free Apple ID installs last 7 days. SideStore can renew it on the iPhone automatically; you'll also get a reminder a day before it runs out. Data is kept when you refresh.")
+                    }
                 }
 
                 Section {

@@ -44,8 +44,8 @@ Everything runs on the iPhone: Apple's on-device speech recognition, a bundled u
 ### Marathi speech (one time)
 In the app: Settings › **Marathi & mixed speech** › pick *Large v3* (547 MB, best) or *Small* (216 MB, faster) › **Download** on Wi-Fi › **Prepare now**. The first preparation can take a few minutes. Then choose **मरा** (Marathi) or **Mix** with the globe button on the capture screen.
 
-### Every 7 days
-Refresh in AltStore (or automatically), or re-install the same `.ipa` with Sideloadly. Your data stays.
+### Every 7 days: make it automatic
+Free Apple ID installs expire after 7 days. **Recommended: install through SideStore and add a daily Shortcuts automation.** It then renews on the iPhone with no PC; see [docs/05-no-weekly-reinstall.md](docs/05-no-weekly-reinstall.md). The app also shows its expiry date in Settings and notifies you a day before. Your data always stays.
 
 ## Setup with a Mac (alternative)
 `brew install xcodegen && xcodegen generate`, open `VoicePlanner.xcodeproj`, set Signing → Team to your Apple ID ("Personal Team"), choose your iPhone, Run. It has the same 7-day limit.

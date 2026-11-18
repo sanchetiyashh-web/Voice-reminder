@@ -17,6 +17,23 @@ final class AppModel: ObservableObject {
     /// Set by the "Start listening" Siri/Shortcuts intent; the UI opens the recorder.
     @Published var pendingStartListening = false
 
+    /// When this install's 7-day (free Apple ID) signature runs out; nil for App Store/TestFlight-style installs.
+    @Published private(set) var signingExpiry: Date?
+
+    /// Schedules a reminder 24 h before the signature expires (replaces any earlier one).
+    func checkSigningExpiry() async {
+        signingExpiry = SigningInfo.expirationDate()
+        guard let exp = signingExpiry else { return }
+        let id = "signing-expiry"
+        notifications.cancel([id])
+        let remindAt = exp.addingTimeInterval(-24 * 3600)
+        let fireAt = remindAt > Date() ? remindAt : Date().addingTimeInterval(60)
+        guard exp > Date().addingTimeInterval(120), await notifications.authorizationGranted() else { return }
+        try? await notifications.schedule(id: id, title: "Refresh Voice Planner",
+                                          body: "The app's free signature expires \(SigningInfo.remainingText(exp) == "expired" ? "now" : "soon"). Open SideStore and tap Refresh All (or reinstall from your PC). Your data is safe.",
+                                          at: fireAt)
+    }
+
     /// Words that help the recognizer (names and titles you already use).
     func contextualStrings() -> [String] {
         var words = Set<String>()
@@ -48,7 +65,10 @@ struct VoicePlannerApp: App {
                 .onChange(of: phase) { _, p in
                     if p == .active {
                         model.calendar.refreshStatus()
-                        Task { await model.executor.retryPending() }
+                        Task {
+                            await model.executor.retryPending()
+                            await model.checkSigningExpiry()
+                        }
                     }
                 }
         }
