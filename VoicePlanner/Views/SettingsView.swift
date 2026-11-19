@@ -23,7 +23,7 @@ struct SettingsView: View {
                     Picker("Language", selection: $settings.localeId) {
                         ForEach(AppSettings.languages, id: \.id) { Text($0.name).tag($0.id) }
                     }
-                    LabeledContent("Recognition", value: WhisperService.usesWhisper(settings.localeId) ? "Whisper on iPhone (after you stop)" : (!SpeechRecorder.recognizerExists(settings.localeId) ? "Language not supported by Apple" : (SpeechRecorder.onDeviceSupported(settings.localeId) ? "Apple, on-device, live" : "Apple on-device not available")))
+                    LabeledContent("Recognition", value: recognitionText)
                     Toggle("Allow Apple server recognition", isOn: $settings.allowServerRecognition)
                     Picker("Stop after silence", selection: $settings.autoStopSilenceSec) {
                         Text("Only when I tap Stop").tag(0)
@@ -149,6 +149,14 @@ struct SettingsView: View {
             }
             .onAppear { calendar.refreshStatus() }
         }
+    }
+
+    private var recognitionText: String {
+        let id = settings.localeId
+        if WhisperService.usesWhisper(id) { return "Whisper on iPhone (after you stop)" }
+        if !SpeechRecorder.recognizerExists(id) { return "Language not supported by Apple" }
+        if SpeechRecorder.onDeviceSupported(id) { return "Apple, on-device, live" }
+        return "Apple on-device not available"
     }
 
     private var isBusy: Bool {

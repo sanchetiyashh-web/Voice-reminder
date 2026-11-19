@@ -18,69 +18,20 @@ struct ItemDetailView: View {
     var body: some View {
         Form {
             if let d = draft {
-                Section {
-                    TextField("Title", text: bind(\.title), axis: .vertical)
-                    Picker("Type", selection: bind(\.kind)) {
-                        ForEach(ItemKind.allCases) { Text($0.label).tag($0) }
-                    }
-                    if d.kind != .idea {
-                        Toggle("Completed", isOn: bind(\.isCompleted))
-                    }
-                }
+                basicSection(d)
                 if d.kind == .idea {
                     Section("Points (one per line)") {
                         TextEditor(text: $pointersText).frame(minHeight: 120)
                     }
                 } else {
-                    Section("When") {
-                        Toggle("Date", isOn: $hasDate)
-                        if hasDate {
-                            Toggle("Time", isOn: $hasTime)
-                            DatePicker("Starts", selection: $dateValue, displayedComponents: hasTime ? [.date, .hourAndMinute] : [.date])
-                        }
-                        if d.kind == .task {
-                            Toggle("Remind me at that time", isOn: bind(\.reminder))
-                                .disabled(!hasTime)
-                        }
-                        if d.kind == .appointment {
-                            Stepper("Duration: \(d.durationMin ?? settings.defaultDurationMin) min",
-                                    value: Binding(get: { draft?.durationMin ?? settings.defaultDurationMin }, set: { draft?.durationMin = $0 }),
-                                    in: 5...720, step: 15)
-                            if d.kind == .appointment && (!hasDate || !hasTime) {
-                                Text("An appointment needs a date and a time to go into Calendar.").font(.footnote).foregroundStyle(.orange)
-                            }
-                        }
-                    }
+                    whenSection(d)
                     if d.kind == .appointment {
-                        Section("Calendar & alerts") {
-                            LabeledContent("Calendar", value: calendarText(d))
-                            if let e = d.calendarError, d.calendarState != .synced { Text(e).font(.footnote).foregroundStyle(.orange) }
-                            if let a = d.alertSummary { Text(a).font(.footnote) }
-                            Text("Alerts: " + (d.alertOffsetsMin ?? settings.appointmentAlertsMin).sorted(by: >).map { Fmt.offset($0) + " before" }.joined(separator: ", ") + (d.alertOffsetsMin == nil ? " (defaults)" : ""))
-                                .font(.footnote).foregroundStyle(.secondary)
-                            if d.alertOffsetsMin != nil {
-                                Button("Use default alerts") { draft?.alertOffsetsMin = nil }
-                            }
-                            if d.calendarState != .synced {
-                                Button("Retry adding to Calendar") { Task { result = await executor.retrySync(itemId); reload() } }
-                            }
-                        }
+                        calendarSection(d)
                     } else if let a = d.alertSummary {
                         Section("Reminder") { Text(a).font(.footnote) }
                     }
                 }
-                if !d.transcript.isEmpty {
-                    Section("What you said") { Text(d.transcript).font(.callout).textSelection(.enabled) }
-                }
-                if !d.notes.isEmpty {
-                    Section("Notes") { ForEach(d.notes, id: \.self) { Text($0).font(.footnote) } }
-                }
-                if let r = result { Section { ResultRow(line: r) } }
-                Section {
-                    Button("Delete", role: .destructive) {
-                        Task { let l = await executor.delete(itemId); if l.ok { dismiss() } else { result = l } }
-                    }
-                }
+                extraSections(d)
             } else {
                 Text("This item no longer exists.")
             }
@@ -93,6 +44,92 @@ struct ItemDetailView: View {
             }
         }
         .onAppear(perform: reload)
+    }
+
+    @ViewBuilder
+    private func basicSection(_ d: PlannerItem) -> some View {
+        Section {
+            TextField("Title", text: bind(\.title), axis: .vertical)
+            Picker("Type", selection: bind(\.kind)) {
+                ForEach(ItemKind.allCases) { k in Text(k.label).tag(k) }
+            }
+            if d.kind != .idea {
+                Toggle("Completed", isOn: bind(\.isCompleted))
+            }
+        }
+    }
+
+    private var durationBinding: Binding<Int> {
+        Binding(get: { draft?.durationMin ?? settings.defaultDurationMin },
+                set: { draft?.durationMin = $0 })
+    }
+
+    @ViewBuilder
+    private func whenSection(_ d: PlannerItem) -> some View {
+        Section("When") {
+            Toggle("Date", isOn: $hasDate)
+            if hasDate {
+                Toggle("Time", isOn: $hasTime)
+                DatePicker("Starts", selection: $dateValue, displayedComponents: pickerComponents)
+            }
+            if d.kind == .task {
+                Toggle("Remind me at that time", isOn: bind(\.reminder))
+                    .disabled(!hasTime)
+            }
+            if d.kind == .appointment {
+                let minutes: Int = d.durationMin ?? settings.defaultDurationMin
+                Stepper("Duration: \(minutes) min", value: durationBinding, in: 5...720, step: 15)
+                if !hasDate || !hasTime {
+                    Text("An appointment needs a date and a time to go into Calendar.")
+                        .font(.footnote).foregroundStyle(.orange)
+                }
+            }
+        }
+    }
+
+    private var pickerComponents: DatePickerComponents {
+        hasTime ? [.date, .hourAndMinute] : [.date]
+    }
+
+    private func alertsText(_ d: PlannerItem) -> String {
+        let offsets: [Int] = (d.alertOffsetsMin ?? settings.appointmentAlertsMin).sorted(by: >)
+        let parts: [String] = offsets.map { (o: Int) -> String in Fmt.offset(o) + " before" }
+        let suffix: String = d.alertOffsetsMin == nil ? " (defaults)" : ""
+        return "Alerts: " + parts.joined(separator: ", ") + suffix
+    }
+
+    @ViewBuilder
+    private func calendarSection(_ d: PlannerItem) -> some View {
+        Section("Calendar & alerts") {
+            LabeledContent("Calendar", value: calendarText(d))
+            if let e = d.calendarError, d.calendarState != .synced {
+                Text(e).font(.footnote).foregroundStyle(.orange)
+            }
+            if let a = d.alertSummary { Text(a).font(.footnote) }
+            Text(alertsText(d)).font(.footnote).foregroundStyle(.secondary)
+            if d.alertOffsetsMin != nil {
+                Button("Use default alerts") { draft?.alertOffsetsMin = nil }
+            }
+            if d.calendarState != .synced {
+                Button("Retry adding to Calendar") { Task { result = await executor.retrySync(itemId); reload() } }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func extraSections(_ d: PlannerItem) -> some View {
+        if !d.transcript.isEmpty {
+            Section("What you said") { Text(d.transcript).font(.callout).textSelection(.enabled) }
+        }
+        if !d.notes.isEmpty {
+            Section("Notes") { ForEach(d.notes, id: \.self) { n in Text(n).font(.footnote) } }
+        }
+        if let r = result { Section { ResultRow(line: r) } }
+        Section {
+            Button("Delete", role: .destructive) {
+                Task { let l = await executor.delete(itemId); if l.ok { dismiss() } else { result = l } }
+            }
+        }
     }
 
     private func bind<T>(_ kp: WritableKeyPath<PlannerItem, T>) -> Binding<T> {
