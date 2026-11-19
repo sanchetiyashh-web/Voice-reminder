@@ -38,6 +38,21 @@ jobs:
             -skipPackagePluginValidation -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build | tee build.log
+      - name: Publish build errors as annotations
+        if: failure()
+        run: |
+          # Logs need a GitHub sign-in to view; annotations and the job summary are public.
+          grep -E "error:|fatal error|failed|Failed to|could not|Could not" build.log | grep -v "^note:" | sort -u | head -40 > errors.txt || true
+          [ -s errors.txt ] || tail -40 build.log > errors.txt
+          while IFS= read -r line; do
+            if [[ "$line" =~ ^(/[^:]+\.swift):([0-9]+):([0-9]+):\ error:\ (.*)$ ]]; then
+              f="${BASH_REMATCH[1]#$GITHUB_WORKSPACE/}"
+              echo "::error file=$f,line=${BASH_REMATCH[2]},col=${BASH_REMATCH[3]}::${BASH_REMATCH[4]}"
+            else
+              echo "::error::${line:0:900}"
+            fi
+          done < errors.txt
+          { echo '## Build errors'; echo '```'; cat errors.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Package unsigned IPA
         run: |
           mkdir -p Payload
